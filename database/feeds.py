@@ -16,7 +16,7 @@ class FeedData:
 class Feeds:
     @staticmethod
     def session_get_feed(sess, limit=5):
-        feed_titles = sess.query(Feed).order_by(func.rand()).limit(limit).all()
+        feed_titles = sess.query(Feed).order_by(Feed.index).limit(limit).all()
         return [
             FeedData(
                 title=feed_title.title, 

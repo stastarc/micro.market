@@ -11,9 +11,10 @@ PAGE_SIZE = 20
 @dataclass
 class ShortProductData:
     id: int
-    name: str
+    title: str
     price: int
     image: str
+    rating: float
 
 @dataclass
 class DetailProductData:    
@@ -25,6 +26,7 @@ class DetailProductData:
     info: str
     rating: float
     images: list[str]
+    component: str
     content: str
 
 class Products:
@@ -46,12 +48,14 @@ class Products:
             {'q': query}).first()
 
     @staticmethod
-    def get_short(product: Product) -> ShortProductData:
+    def get_short(sess, product: Product) -> ShortProductData:
+        images = Product.parse_images(product.images)  # type: ignore
         return ShortProductData(
             id=product.id,   # type: ignore
-            name=product.name,   # type: ignore
+            title=product.title,   # type: ignore
             price=product.price,   # type: ignore
-            image=Product.parse_images(product.images)[0]  # type: ignore
+            image=images[0] if images else '',
+            rating=Rating.session_get_average_rating(sess, product.id)  # type: ignore
         )
 
     @staticmethod
@@ -65,6 +69,7 @@ class Products:
             info=product.info,   # type: ignore
             rating=Rating.session_get_average_rating(sess, product.id),  # type: ignore
             images=Product.parse_images(product.images),  # type: ignore
+            component=product.component,   # type: ignore
             content=product.content  # type: ignore
         )
     
@@ -78,7 +83,7 @@ class Products:
     @staticmethod
     def session_search_short(sess, query: str, mode: Literal['full', 'tag', 'name']) -> list[ShortProductData]:
         products = Products.session_search(sess, query, mode)
-        return [Products.get_short(product) for product in products]
+        return [Products.get_short(sess, product) for product in products]
 
     @staticmethod
     def session_get_detail(sess, product_id: int) -> DetailProductData | None:

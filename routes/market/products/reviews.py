@@ -16,4 +16,7 @@ def product_desc(product_id: int, offset: int = 0, orderby: Literal['last', 'hig
         if not Product.session_exists(sess, product_id):
             return Response(status_code=404)
 
-        return Rating.session_get_ratings(sess, product_id, offset, orderby)
+        return {
+            'average': Rating.session_get_average_rating(sess, product_id),
+            'ratings': Rating.session_get_ratings(sess, product_id, offset, orderby),
+        }

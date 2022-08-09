@@ -25,7 +25,7 @@ def create_qna(product_id: int, req: QnARequest, token: VerifyBody = Depends(aut
     if not token.success:
         return token.payload
 
-    if not 10 <= len(req.content) <= 1000:
+    if not 5 <= len(req.content) <= 400:
         return Response(status_code=400)
 
     with scope() as sess:

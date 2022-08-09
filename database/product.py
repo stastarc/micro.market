@@ -15,6 +15,7 @@ class Product(Base):
     info = Column(String(1000, 'utf8mb3_bin'), nullable=False)
     images = Column(String(320, 'utf8mb3_bin'), nullable=False, comment='이미지 최대 10장')
     component = Column(String(1000, 'utf8mb3_bin'), nullable=False)
+    options = Column(String(1000, 'utf8mb3_bin'), nullable=False)
     content = Column(MEDIUMTEXT, nullable=False)
     updated_at = Column(DateTime)
     uploaded_at = Column(DateTime, nullable=False, server_default=text("current_timestamp()"))

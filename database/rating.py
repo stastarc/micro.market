@@ -4,6 +4,8 @@ from typing import Literal
 from sqlalchemy import Column, DateTime, String, Text, text
 from sqlalchemy.dialects.mysql import BIGINT, TINYINT
 from sqlalchemy.sql.functions import func
+
+import micro
 from .db import Base
 
 PAGE_SIZE = 10
@@ -13,6 +15,7 @@ class RatingData:
     id: int
     rating: int
     comment: str
+    writer: micro.UserInfo | None
     images: str
     updated_at: str
 
@@ -30,8 +33,9 @@ class Rating(Base):
 
     @staticmethod
     def parse_images(images: str) -> list[str]:
+        if not images: return []
         count = len(images) // 32
-        return [images[i*32:(i+1)*32] for i in range(count)] or ['']
+        return [images[i*32:(i+1)*32] for i in range(count)] or []
 
     @staticmethod
     def session_get_average_rating(session, product_id: int) -> float:
@@ -49,6 +53,7 @@ class Rating(Base):
             id=rating.id,  # type: ignore
             rating=rating.rating,  # type: ignore
             comment=rating.comment,  # type: ignore
+            writer=micro.Auth.user_info(rating.user_id),  # type: ignore
             images=Rating.parse_images(rating.images),  # type: ignore
             updated_at=datetime.isoformat(rating.updated_at),  # type: ignore
         )

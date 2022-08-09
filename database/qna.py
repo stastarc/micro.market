@@ -1,8 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
+from email.mime import image
 from sqlalchemy import Column, DateTime, String, text
 from sqlalchemy.dialects.mysql import BIGINT
+
+import micro
 from .db import Base
 
 PAGE_SIZE = 20
@@ -11,7 +14,7 @@ PAGE_SIZE = 20
 class QnaData:
     id: int
     product_id: int
-    writer_id: int
+    writer: micro.UserInfo
     content: str
     answer : str | None
     answered_at: str | None
@@ -31,11 +34,13 @@ class Qna(Base):
     @staticmethod
     def get_detail(qna: Qna) -> QnaData:
         ans = qna.answered_at
+        writer_id = qna.writer_id
+        writer = micro.Auth.user_info(writer_id)  # type: ignore
 
         return QnaData(
             id=qna.id,  # type: ignore
             product_id=qna.product_id,  # type: ignore
-            writer_id=qna.writer_id,  # type: ignore
+            writer=writer,  # type: ignore
             content=qna.content,  # type: ignore
             answer=qna.answer,  # type: ignore
             answered_at=datetime.isoformat(ans) if ans else None,  # type: ignore
@@ -48,7 +53,9 @@ class Qna(Base):
 
     @staticmethod
     def session_get_qnas(sess, product_id: int, offset: int) -> list[Qna]:
-        return sess.query(Qna).filter(Qna.product_id == product_id).offset(offset*PAGE_SIZE).limit(PAGE_SIZE).all()
+        return sess.query(Qna).filter(Qna.product_id == product_id) \
+            .order_by(Qna.uploaded_at.desc()) \
+            .offset(offset*PAGE_SIZE).limit(PAGE_SIZE).all()
 
     @staticmethod
     def session_add(sess, product_id: int, writer_id: int, content: str) -> Qna:

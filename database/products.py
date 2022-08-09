@@ -4,9 +4,28 @@ from typing import Literal
 from .product import Product
 from .rating import Rating
 
-from sqlalchemy.sql.expression import func
 
 PAGE_SIZE = 20
+
+@dataclass
+class ProductOption:
+    name: str
+    price: int
+    important: bool
+
+    @staticmethod
+    def parse_options(option: str) -> list['ProductOption']:
+        if not option: return []
+        options = option.split('\n')
+        ops = []
+
+        for op in options:
+            if not op: continue
+            name, price = op.split(':')
+            imp = op[0] == '!'
+            ops.append(ProductOption(name[1 if imp else 0:], int(price), imp))
+        
+        return ops
 
 @dataclass
 class ShortProductData:
@@ -27,6 +46,7 @@ class DetailProductData:
     rating: float
     images: list[str]
     component: str
+    options: list[ProductOption]
     content: str
 
 class Products:
@@ -70,6 +90,7 @@ class Products:
             rating=Rating.session_get_average_rating(sess, product.id),  # type: ignore
             images=Product.parse_images(product.images),  # type: ignore
             component=product.component,   # type: ignore
+            options=ProductOption.parse_options(product.options),   # type: ignore
             content=product.content  # type: ignore
         )
     

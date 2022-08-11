@@ -31,6 +31,7 @@ class ProductOption:
 class ShortProductData:
     id: int
     title: str
+    name: str
     price: int
     image: str
     rating: float
@@ -60,6 +61,13 @@ class Products:
         return sess.execute(
             f'SELECT *, {fulltext} as score FROM `{Product.__tablename__}` WHERE {fulltext} ORDER BY score DESC LIMIT {offset*PAGE_SIZE},{limit}',
             {'q': query}).all()
+            
+    @staticmethod
+    def session_search_count(sess, query: str, mode: Literal['full', 'tag', 'name']) -> int:
+        fulltext = Products.fulltext_search_against(mode)
+        return sess.execute(
+            f'SELECT count(*) as score FROM `{Product.__tablename__}` WHERE {fulltext}',
+            {'q': query}).scalar()
         
     @staticmethod
     def session_search_one(sess, query: str, mode: Literal['full', 'tag', 'name']) -> Product | None:
@@ -73,6 +81,7 @@ class Products:
         return ShortProductData(
             id=product.id,   # type: ignore
             title=product.title,   # type: ignore
+            name=product.name,   # type: ignore
             price=product.price,   # type: ignore
             image=images[0] if images else '',
             rating=Rating.session_get_average_rating(sess, product.id)  # type: ignore
@@ -102,8 +111,8 @@ class Products:
         return Products.get_detail(sess, product)
 
     @staticmethod
-    def session_search_short(sess, query: str, mode: Literal['full', 'tag', 'name']) -> list[ShortProductData]:
-        products = Products.session_search(sess, query, mode)
+    def session_search_short(sess, query: str, mode: Literal['full', 'tag', 'name'], offset: int = 0) -> list[ShortProductData]:
+        products = Products.session_search(sess, query, mode, offset=offset)
         return [Products.get_short(sess, product) for product in products]
 
     @staticmethod
